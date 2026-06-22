@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.demo.customer.mapper.CustomerMapper">
+
+    <resultMap id="CustomerResultMap" type="com.example.demo.customer.domain.Customer">
+        <id column="CUSTOMER_ID" property="id"/>
+        <result column="NAME" property="name"/>
+        <result column="EMAIL" property="email"/>
+        <result column="PHONE_NUMBER" property="phoneNumber"/>
+        <result column="CREATED_AT" property="createdAt"/>
+        <result column="UPDATED_AT" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findAll" resultMap="CustomerResultMap">
+        SELECT
+            CUSTOMER_ID,
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        FROM CUSTOMERS
+        ORDER BY CUSTOMER_ID DESC
+    </select>
+
+    <select id="findById" parameterType="long" resultMap="CustomerResultMap">
+        SELECT
+            CUSTOMER_ID,
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        FROM CUSTOMERS
+        WHERE CUSTOMER_ID = #{id}
+    </select>
+
+    <insert id="insert" parameterType="com.example.demo.customer.domain.Customer">
+        <selectKey keyProperty="id" resultType="long" order="AFTER">
+            SELECT IDENTITY_VAL_LOCAL() FROM SYSIBM.SYSDUMMY1
+        </selectKey>
+        INSERT INTO CUSTOMERS (
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        ) VALUES (
+            #{name},
+            #{email},
+            #{phoneNumber},
+            CURRENT TIMESTAMP,
+            CURRENT TIMESTAMP
+        )
+    </insert>
+
+    <update id="update" parameterType="com.example.demo.customer.domain.Customer">
+        UPDATE CUSTOMERS
+        SET
+            NAME = #{name},
+            EMAIL = #{email},
+            PHONE_NUMBER = #{phoneNumber},
+            UPDATED_AT = CURRENT TIMESTAMP
+        WHERE CUSTOMER_ID = #{id}
+    </update>
+
+    <delete id="deleteById" parameterType="long">
+        DELETE FROM CUSTOMERS
+        WHERE CUSTOMER_ID = #{id}
+    </delete>
+</mapper>
