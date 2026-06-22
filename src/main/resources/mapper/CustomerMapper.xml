@@ -147,10 +147,10 @@
         )
         <foreach collection="customers" item="customer" separator=" UNION ALL ">
             SELECT
-                #{customer.name},
-                #{customer.email},
-                #{customer.phoneNumber},
-                #{status},
+                CAST(#{customer.name} AS VARCHAR(100)),
+                CAST(#{customer.email} AS VARCHAR(200)),
+                CAST(#{customer.phoneNumber} AS VARCHAR(30)),
+                CAST(#{status} AS VARCHAR(20)),
                 CURRENT TIMESTAMP
             FROM SYSIBM.SYSDUMMY1
         </foreach>
