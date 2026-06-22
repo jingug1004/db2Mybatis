@@ -37,6 +37,38 @@
         WHERE CUSTOMER_ID = #{id}
     </select>
 
+    <select id="findByEmail" parameterType="string" resultMap="CustomerResultMap">
+        SELECT
+            CUSTOMER_ID,
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        FROM CUSTOMERS
+        WHERE EMAIL = #{email}
+    </select>
+
+    <select id="search" resultMap="CustomerResultMap">
+        SELECT
+            CUSTOMER_ID,
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        FROM CUSTOMERS
+        <where>
+            <if test="name != null and name != ''">
+                AND LOWER(NAME) LIKE '%' || LOWER(#{name}) || '%'
+            </if>
+            <if test="email != null and email != ''">
+                AND LOWER(EMAIL) LIKE '%' || LOWER(#{email}) || '%'
+            </if>
+        </where>
+        ORDER BY CUSTOMER_ID DESC
+    </select>
+
     <insert id="insert" parameterType="com.example.demo.customer.domain.Customer">
         <selectKey keyProperty="id" resultType="long" order="AFTER">
             SELECT IDENTITY_VAL_LOCAL() FROM SYSIBM.SYSDUMMY1
@@ -54,6 +86,97 @@
             CURRENT TIMESTAMP,
             CURRENT TIMESTAMP
         )
+    </insert>
+
+    <update id="mergeByEmail" parameterType="com.example.demo.customer.domain.Customer">
+        MERGE INTO CUSTOMERS AS T
+        USING (
+            SELECT
+                CAST(#{name} AS VARCHAR(100)) AS NAME,
+                CAST(#{email} AS VARCHAR(200)) AS EMAIL,
+                CAST(#{phoneNumber} AS VARCHAR(30)) AS PHONE_NUMBER
+            FROM SYSIBM.SYSDUMMY1
+        ) AS S
+        ON T.EMAIL = S.EMAIL
+        WHEN MATCHED THEN
+            UPDATE SET
+                T.NAME = S.NAME,
+                T.PHONE_NUMBER = S.PHONE_NUMBER,
+                T.UPDATED_AT = CURRENT TIMESTAMP
+        WHEN NOT MATCHED THEN
+            INSERT (
+                NAME,
+                EMAIL,
+                PHONE_NUMBER,
+                CREATED_AT,
+                UPDATED_AT
+            ) VALUES (
+                S.NAME,
+                S.EMAIL,
+                S.PHONE_NUMBER,
+                CURRENT TIMESTAMP,
+                CURRENT TIMESTAMP
+            )
+    </update>
+
+    <insert id="insertCopyFromCustomer">
+        INSERT INTO CUSTOMERS (
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        )
+        SELECT
+            NAME,
+            #{newEmail},
+            PHONE_NUMBER,
+            CURRENT TIMESTAMP,
+            CURRENT TIMESTAMP
+        FROM CUSTOMERS
+        WHERE CUSTOMER_ID = #{sourceCustomerId}
+    </insert>
+
+    <insert id="insertStagingBatch">
+        INSERT INTO CUSTOMER_STAGING (
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            STATUS,
+            CREATED_AT
+        )
+        <foreach collection="customers" item="customer" separator=" UNION ALL ">
+            SELECT
+                #{customer.name},
+                #{customer.email},
+                #{customer.phoneNumber},
+                #{status},
+                CURRENT TIMESTAMP
+            FROM SYSIBM.SYSDUMMY1
+        </foreach>
+    </insert>
+
+    <insert id="insertFromStaging" parameterType="string">
+        INSERT INTO CUSTOMERS (
+            NAME,
+            EMAIL,
+            PHONE_NUMBER,
+            CREATED_AT,
+            UPDATED_AT
+        )
+        SELECT
+            S.NAME,
+            S.EMAIL,
+            S.PHONE_NUMBER,
+            CURRENT TIMESTAMP,
+            CURRENT TIMESTAMP
+        FROM CUSTOMER_STAGING S
+        WHERE S.STATUS = #{status}
+          AND NOT EXISTS (
+              SELECT 1
+              FROM CUSTOMERS C
+              WHERE C.EMAIL = S.EMAIL
+          )
     </insert>
 
     <update id="update" parameterType="com.example.demo.customer.domain.Customer">

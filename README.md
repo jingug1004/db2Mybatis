@@ -73,3 +73,41 @@ curl -X PUT http://localhost:8080/api/customers/1 \
 ```bash
 curl -X DELETE http://localhost:8080/api/customers/1
 ```
+
+## Advanced MyBatis / DB2 API
+
+Dynamic SQL search using `<where>` and `<if>`:
+
+```bash
+curl "http://localhost:8080/api/customers/search?name=kim&email=example.com"
+```
+
+DB2 `MERGE INTO` upsert by email:
+
+```bash
+curl -X POST http://localhost:8080/api/customers/upsert \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Kim Minsoo Updated","email":"minsoo@example.com","phoneNumber":"010-9999-0000"}'
+```
+
+DB2 `INSERT INTO ... SELECT ... FROM` copy from an existing customer:
+
+```bash
+curl -X POST http://localhost:8080/api/customers/1/copy \
+  -H "Content-Type: application/json" \
+  -d '{"newEmail":"minsoo.copy@example.com"}'
+```
+
+MyBatis `<foreach>` batch staging insert:
+
+```bash
+curl -X POST "http://localhost:8080/api/customers/staging?status=READY" \
+  -H "Content-Type: application/json" \
+  -d '{"customers":[{"name":"Han Seojun","email":"seojun@example.com","phoneNumber":"010-1212-3434"},{"name":"Seo Ara","email":"ara@example.com","phoneNumber":"010-5656-7878"}]}'
+```
+
+DB2 `INSERT INTO ... SELECT ... FROM CUSTOMER_STAGING` import:
+
+```bash
+curl -X POST "http://localhost:8080/api/customers/import/from-staging?status=READY"
+```
